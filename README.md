@@ -11,56 +11,49 @@ A paper-trading-first Solana token discovery and monitoring prototype.
 - Prices, liquidity and simulated fills are estimates, not executable quotes.
 - Social popularity is discovery evidence only and never overrides token safety checks.
 
-## Features
+## Trading Intelligence 2.1
 
 - Recent Solana token-profile discovery through DexScreener.
-- Free RSS news and announcement feed monitoring, configurable through `SOCIAL_RSS_FEEDS`.
-- Optional official X recent-post search integration, disabled by default and protected by a daily post-read cap.
-- Social posts can surface Solana mint addresses; those addresses are independently checked through DexScreener and RugCheck.
-- Pair data retrieval and liquidity/volume/activity filters.
-- RugCheck report retrieval with fail-closed checks for risk score, reported locked liquidity, holder concentration, mint authority and freeze authority.
-- Separate token-security screening and trade-timing score based on 5m/15m/1h momentum, recent volume, buy/sell pressure and liquidity.
-- Paper entries only when required short-term evidence exists and the momentum score reaches the configured threshold.
-- Simulated stop-loss, take-profit, break-even and trailing-stop exits; stop triggers are not guaranteed fills.
-- Conservative risk ceilings: at most 10% of available paper cash per position, one open position, 5% daily drawdown lockout, two consecutive daily losses lockout and a 30-minute post-loss cooldown.
-- Trade journal with realized/unrealized P/L, total return and daily drawdown.
-- Read-only public wallet signature monitoring.
-- Local state persistence and automated unit tests.
+- RSS/Atom news and announcement feed monitoring; optional official X recent-post search is disabled by default.
+- Independent token-security and momentum checks.
+- Bounded token scanning and cached RugCheck reports; HTTP 429 triggers a cooldown and fails closed.
+- One open position maximum; position size is capped at 5% of available paper cash.
+- Daily drawdown lockout at 3%, two consecutive losses lockout, and at least a 60-minute post-loss cooldown.
+- Stop, take-profit, break-even and trailing exit simulations. Stop triggers are not guaranteed fills.
+- Stale price data pauses new entries and does not invent a simulated exit price.
+- Existing positions are refreshed and managed before the bot scans for new entries.
+- Trade journal reports realized/unrealized P/L and drawdown.
+
+## Marriage fund objective
+
+The project can track a separate J$400,000 marriage-fund goal, but this is a target, not a forecast or promise. Only realized net profits after fees count as potential contributions. Trading capital is kept separate, no profit is automatically withdrawn, and wedding savings should not be risked. A paper-trading profit is not real income.
 
 ## Setup
 
 Requires Node.js 20.6 or newer.
 
 ```sh
-cp .env.example .env
 npm test
+npm run reset-paper
 npm start
 ```
 
-On iPad, open this repository in GitHub Codespaces. Create `.env` from `.env.example` in the Codespaces editor, then run the commands in its terminal. Never commit `.env`.
+The reset command:
+- backs up the existing local `data/state.json` paper history to a timestamped file in `data/`;
+- resets the simulated balance and starting baseline to US$20;
+- clears open paper positions and old trade history;
+- sets `START_BALANCE_USD=20` in the local `.env`.
 
-## Social discovery configuration
+This does not touch real funds, a wallet or the blockchain. Run it only when you intentionally want a fresh paper test. Do not run it again during the test, or you will reset the results.
 
-RSS scanning is active by default and runs every 15 minutes. Default feeds are CoinDesk and Cointelegraph. You can replace/add comma-separated public RSS/Atom feed URLs with `SOCIAL_RSS_FEEDS`.
-
-X integration is prepared but off by default:
-- Create an app in the official X Developer Console and obtain an app bearer token.
-- Set `X_API_ENABLED=true` and `X_BEARER_TOKEN` in your private Codespaces `.env` file.
-- Keep `X_MAX_POSTS_PER_DAY` low. The default is 20 returned posts per UTC day.
-- X recent search covers the previous seven days. X currently uses pay-per-use billing; consult its live pricing before enabling. A rough current published rate is US$0.005 per post read, so 20 returned posts could cost around US$0.10. Actual billing and taxes can differ.
-
-Never put the bearer token in source code, GitHub commits, screenshots or chat. Do not enable X until the account's API billing and usage cap are understood.
-
-Social posts without a Solana mint address are logged as leads only; the bot does not guess contract addresses from tickers or names. A discovered address still has to pass all existing independent market and security checks. RSS feeds can be delayed, promotional or inaccurate.
+On iPad, open this repository in GitHub Codespaces. Never commit `.env`. Never put a seed phrase or private key in the project.
 
 ## Configuration
 
-The default paper account starts at US$2, risks at most 10% of available paper cash per position and allows one open position. Default filters require US$10,000 liquidity, US$1,000 hourly volume, 15 hourly transactions, RugCheck score no higher than 25, and reported LP lock of at least 80%. The estimated round-trip fee/slippage ceiling is 5%.
-
-Trading Intelligence 2.0 requires short-term DexScreener fields; if those fields are missing, the bot skips the trade rather than guessing. These thresholds are experimental filters, not evidence of a profitable edge. Paper tests and out-of-sample evaluation are required.\n\nA US$2 live account is not recommended: network fees, priority fees, pool fees and slippage can consume a large fraction of such a small trade. This repository deliberately contains no live execution path.
+Defaults are conservative: US$20 paper starting balance, 5% maximum paper position, one open position, 3% daily drawdown entry lockout, 60-minute minimum cooldown, at least 75/100 trade signal score, US$15,000 reported liquidity, US$1,500 hourly volume, 20 hourly transactions, RugCheck risk score no higher than 25, and reported LP lock of at least 80%. The app clamps important risk settings so local `.env` values cannot raise position size above 5%, stop-loss trigger above 8%, daily drawdown limit above 3%, or cooldown below 60 minutes.
 
 ## Important limitations
 
-Provider APIs can change, return incomplete data, rate-limit requests or be unavailable. The bot screens only the evidence it receives; it does not decode every Solana program or prove a token is safe. Rug pulls and rapid liquidity withdrawals can still happen. Treat every candidate as high risk and do not rely on a score as investment advice.
+Provider APIs can change, return incomplete data, rate-limit requests or be unavailable. The bot screens only the evidence it receives; it does not decode every Solana program or prove a token is safe. Rug pulls, sudden liquidity withdrawals, price gaps and unavailable price feeds can still happen. A simulated stop-loss is not a guaranteed fill. Paper trading does not reproduce real execution, latency, priority fees or market impact.
 
-The first version is an MVP for testing data flow and strategy logic. Validate provider schemas, historical performance, execution costs and security assumptions before considering any separate live-trading system.
+The $20 balance is simulated only. It does not mean the bot has earned money or that the same strategy will be profitable live. Complete a substantial, independently reviewed paper test and assess results after all modeled costs before considering any separate live-trading system. This repository deliberately contains no live execution path.
