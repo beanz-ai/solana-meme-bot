@@ -1,10 +1,11 @@
+import { fileURLToPath } from "node:url";
 import { config } from "./config.js";
 import { scanCandidates } from "./strategies/scanner.js";
 import { markToMarket, openPaperPosition, updatePaperPositions } from "./strategies/paper-trader.js";
 import { getRecentWalletActivity } from "./strategies/wallet-monitor.js";
 import { loadState, saveState } from "./storage/state.js";
 
-const STATE_PATH = new URL("../data/state.json", import.meta.url);
+const STATE_PATH = fileURLToPath(new URL("../data/state.json", import.meta.url));
 const state = await loadState(STATE_PATH, config.startBalanceUsd);
 const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
 
