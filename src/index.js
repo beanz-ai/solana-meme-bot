@@ -16,7 +16,7 @@ console.log("Entry model: security gate + momentum score; X API "+(config.xApiEn
 console.log(`Risk controls: ${(config.maxPositionPct*100).toFixed(1)}% position, ${(config.dailyDrawdownLimitPct*100).toFixed(1)}% daily drawdown stop, ${config.maxConsecutiveLosses} consecutive losses, ${Math.round(config.lossCooldownMs/60000)} min cooldown`);
 async function cycle(){
  const today=new Date().toISOString().slice(0,10);
- if(state.day!==today){state.day=today;state.dayStartEquityUsd=state.cashUsd+state.positions.reduce((s,p)=>s+p.quantity*p.lastPrice,0);}
+ if(state.day!==today){state.day=today;state.dayStartEquityUsd=state.cashUsd+state.positions.reduce((s,p)=>s+p.quantity*p.lastPrice,0);state.dayTradeStartIndex=state.trades.length;}
  if(!state.lastSocialScanAt||Date.now()-state.lastSocialScanAt>=config.socialScanIntervalMs){
   try{const social=await discoverSocialLeads(config,state);socialMints=social.mints;state.lastSocialScanAt=Date.now();console.log(`SOCIAL DISCOVERY: ${social.leads.length} new leads, ${social.mints.length} Solana addresses, ${social.xPostsRead} X posts fetched`);}
   catch(error){console.warn("Social discovery failed:",error.message);}
