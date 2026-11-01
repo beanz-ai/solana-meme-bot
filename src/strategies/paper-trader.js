@@ -7,7 +7,7 @@ export function openPaperPosition(state,{mint,price,config,now=new Date()}) {
   if(!mint||!Number.isFinite(price)||price<=0)return{opened:false,reason:"Invalid mint or price"};
   if(state.positions.some(p=>p.mint===mint))return{opened:false,reason:"Already holding token"};
   const equity=state.cashUsd+state.positions.reduce((s,p)=>s+p.quantity*p.lastPrice,0);
-  const sizing=getPositionSize({cashUsd:state.cashUsd,config,openPositions:state.positions.length,equityUsd:equity,dayStartEquityUsd:state.dayStartEquityUsd,trades:state.trades,now:now.getTime(),lastLossAt:state.lastLossAt??0});
+  const sizing=getPositionSize({cashUsd:state.cashUsd,config,openPositions:state.positions.length,equityUsd:equity,dayStartEquityUsd:state.dayStartEquityUsd,trades:state.trades.slice(state.dayTradeStartIndex??0),now:now.getTime(),lastLossAt:state.lastLossAt??0});
   if(!sizing.allowed)return{opened:false,reason:sizing.reason};
   const spend=sizing.sizeUsd,entryFeeUsd=spend*config.estimatedDexFeeBps/10000,entryFillPrice=price*(1+config.estimatedSlippageBps/10000),quantity=(spend-entryFeeUsd)/entryFillPrice;
   if(!(quantity>0)||spend>state.cashUsd)return{opened:false,reason:"Invalid simulated fill"};
