@@ -1,9 +1,9 @@
 const num=(key,fallback)=>{const value=Number(process.env[key]??fallback);if(!Number.isFinite(value))throw new Error(`Invalid numeric setting: ${key}`);return value;};
 export const config=Object.freeze({
  mode:process.env.MODE??"paper",startBalanceUsd:num("START_BALANCE_USD",2),
- maxPositionPct:num("MAX_POSITION_PCT",0.10),maxOpenPositions:Math.floor(num("MAX_OPEN_POSITIONS",1)),
- stopLossPct:num("STOP_LOSS_PCT",0.10),takeProfitPct:num("TAKE_PROFIT_PCT",0.25),
- dailyDrawdownLimitPct:num("DAILY_DRAWDOWN_LIMIT_PCT",0.05),maxConsecutiveLosses:Math.floor(num("MAX_CONSECUTIVE_LOSSES",2)),
+ maxPositionPct:Math.min(num("MAX_POSITION_PCT",0.10),0.10),maxOpenPositions:Math.min(1,Math.floor(num("MAX_OPEN_POSITIONS",1))),
+ stopLossPct:Math.min(num("STOP_LOSS_PCT",0.10),0.10),takeProfitPct:num("TAKE_PROFIT_PCT",0.25),
+ dailyDrawdownLimitPct:Math.min(num("DAILY_DRAWDOWN_LIMIT_PCT",0.05),0.05),maxConsecutiveLosses:Math.floor(num("MAX_CONSECUTIVE_LOSSES",2)),
  lossCooldownMs:num("LOSS_COOLDOWN_MS",1800000),breakEvenActivationPct:num("BREAK_EVEN_ACTIVATION_PCT",0.12),
  trailingActivationPct:num("TRAILING_ACTIVATION_PCT",0.18),trailingStopPct:num("TRAILING_STOP_PCT",0.10),
  minTradeSignalScore:num("MIN_TRADE_SIGNAL_SCORE",70),
