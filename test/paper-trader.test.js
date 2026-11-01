@@ -3,18 +3,26 @@ import assert from "node:assert/strict";
 import { openPaperPosition, markToMarket, updatePaperPositions, getAccountSummary } from "../src/strategies/paper-trader.js";
 
 const config = {
-  maxOpenPositions: 1, maxPositionPct: 0.2, maxRoundtripCostPct: 0.05,
-  estimatedSlippageBps: 100, estimatedDexFeeBps: 30,
-  dailyDrawdownLimitPct: 0.1, stopLossPct: 0.15, takeProfitPct: 0.25
+  maxOpenPositions: 1,
+  riskPerTradePct: 0.15,
+  maxRoundtripCostPct: 0.05,
+  estimatedSlippageBps: 100,
+  estimatedDexFeeBps: 30,
+  dailyDrawdownLimitPct: 0.15,
+  stopLossPct: 0.15,
+  takeProfitPct: 0.25
 };
 const freshState = () => ({ cashUsd: 2, positions: [], trades: [], dayStartEquityUsd: 2 });
 
-test("paper entry spends no more than configured cash fraction", () => {
+test("paper entry sizes from the configured account-risk budget", () => {
   const state = freshState();
   const result = openPaperPosition(state, { mint: "Mint111", price: 1, config });
   assert.equal(result.opened, true);
-  assert.ok(result.spendUsd <= 0.4);
+  assert.ok(result.spendUsd > 0);
+  assert.ok(result.spendUsd <= 2);
   assert.equal(state.positions.length, 1);
+  const estimatedRiskUsd = result.spendUsd * (config.stopLossPct + (2 * (config.estimatedSlippageBps + config.estimatedDexFeeBps)) / 10000);
+  assert.ok(estimatedRiskUsd <= 2 * config.riskPerTradePct + 1e-9);
 });
 
 test("paper trader refuses a second simultaneous position", () => {
