@@ -10,7 +10,8 @@ const config = {
   estimatedSlippageBps: 100, estimatedDexFeeBps: 30, dailyDrawdownLimitPct: 0.1
 };
 const goodPair = { liquidity: { usd: 20000 }, volume: { h1: 5000 }, txns: { h1: { buys: 20, sells: 10 } }, priceUsd: "0.001" };
-const goodRug = { score: 10, lpLockedPct: 90, topHolderPct: 10, mintAuthority: null, freezeAuthority: null, risks: [] };
+// Explicit false means the mint and freeze authorities are confirmed disabled.
+const goodRug = { score: 10, lpLockedPct: 90, topHolderPct: 10, mintAuthority: false, freezeAuthority: false, risks: [] };
 
 test("missing security report fails closed", () => {
   assert.equal(assessToken({ pair: goodPair, rug: null, config }).approved, false);
