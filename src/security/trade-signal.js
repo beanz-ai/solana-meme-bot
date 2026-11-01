@@ -18,5 +18,5 @@ export function scoreTradeSignal(pair) {
   if(buyRatio>=0.55) score+=20; else reasons.push("Buy pressure is not strong enough");
   if(liquidity>=20000) score+=10; else if(liquidity>=10000) score+=5; else reasons.push("Liquidity below trading-signal minimum");
   if(m5Change<8&&m15Change<18) score+=10; else reasons.push("Possible late entry after a sharp move");
-  return {approved:score>=70,score,reasons,metrics:{m5Change,m15Change,h1Change,volumeRatio,buyRatio,liquidity}};
+  return {approved:score>=75&&m5Change>0&&m15Change>0&&buyRatio>=0.55,score,reasons,metrics:{m5Change,m15Change,h1Change,volumeRatio,buyRatio,liquidity}};
 }
