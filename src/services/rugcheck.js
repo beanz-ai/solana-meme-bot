@@ -38,8 +38,8 @@ export function normalizeRugCheck(report) {
     score: firstNumber(report.score_normalised, report.scoreNormalized),
     lpLockedPct: firstNumber(report.lpLockedPct, report.lp_locked_pct),
     topHolderPct: firstNumber(report.topHolderPct, report.top_holder_pct, report.topHoldersPct, firstHolderPct),
-    mintAuthority: authorityDisabled(token.mintAuthority ?? report.mintAuthority ?? report.mint_authority),
-    freezeAuthority: authorityDisabled(token.freezeAuthority ?? report.freezeAuthority ?? report.freeze_authority),
+    mintAuthority: authorityDisabled("mintAuthority" in token ? token.mintAuthority : ("mintAuthority" in report ? report.mintAuthority : report.mint_authority)),
+    freezeAuthority: authorityDisabled("freezeAuthority" in token ? token.freezeAuthority : ("freezeAuthority" in report ? report.freezeAuthority : report.freeze_authority)),
     risks,
     raw: report
   };
