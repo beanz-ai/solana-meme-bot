@@ -1,5 +1,3 @@
-import { getTokenPairs } from "./dexscreener.js";
-
 const DEFAULT_FEEDS = [
   "https://www.coindesk.com/arc/outboundfeeds/rss/",
   "https://cointelegraph.com/rss"
@@ -51,7 +49,8 @@ async function scanX(config, state) {
   const today = new Date().toISOString().slice(0, 10);
   if (state.xDailyDate !== today) { state.xDailyDate = today; state.xPostsToday = 0; }
   const remaining = Math.max(0, config.xMaxPostsPerDay - (state.xPostsToday ?? 0));
-  if (!remaining) return { posts: [], fetched: 0 };
+  // X recent-search requires at least 10 results; skip rather than exceed a smaller remaining daily allowance.
+  if (remaining < 10) return { posts: [], fetched: 0 };
   const params = new URLSearchParams({
     query: '(Solana OR memecoin OR "meme coin" OR "token launch" OR pump.fun) -is:retweet',
     max_results: String(Math.max(10, Math.min(100, remaining))),
