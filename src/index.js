@@ -12,7 +12,7 @@ const sleep=ms=>new Promise(resolve=>setTimeout(resolve,ms));
 let socialMints=[];
 console.log("Solana Meme Bot — TRADING INTELLIGENCE 2.1 — PAPER MODE ONLY");
 console.log(`Paper cash: $${state.cashUsd.toFixed(4)} | Baseline: $${Number(state.initialBalanceUsd).toFixed(4)}`);
-console.log("Marriage objective: track verified net profits separately; no profits are guaranteed or withdrawn automatically.");
+console.log(`Marriage target: J${config.marriageTargetJmd.toLocaleString("en-US")} | USD/JMD rate: ${config.usdToJmdRate>0?config.usdToJmdRate:"not set"} | paper-only tracking`);
 console.log(`Risk: max ${(config.maxPositionPct*100).toFixed(1)}% per position, ${(config.dailyDrawdownLimitPct*100).toFixed(1)}% daily lockout, ${config.maxConsecutiveLosses} consecutive losses, ${Math.round(config.lossCooldownMs/60000)} min cooldown`);
 async function cycle(){
  const today=new Date().toISOString().slice(0,10);
