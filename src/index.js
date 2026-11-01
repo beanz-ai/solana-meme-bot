@@ -1,6 +1,7 @@
 import { fileURLToPath } from "node:url";
 import { config } from "./config.js";
 import { scanCandidates } from "./strategies/scanner.js";
+import { discoverSocialLeads } from "./services/social-discovery.js";
 import { markToMarket, openPaperPosition, updatePaperPositions, getAccountSummary } from "./strategies/paper-trader.js";
 import { getRecentWalletActivity } from "./strategies/wallet-monitor.js";
 import { loadState, saveState } from "./storage/state.js";
@@ -8,15 +9,32 @@ import { loadState, saveState } from "./storage/state.js";
 const STATE_PATH = fileURLToPath(new URL("../data/state.json", import.meta.url));
 const state = await loadState(STATE_PATH, config.startBalanceUsd);
 const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
+let socialMints = [];
 
 console.log("Solana Meme Bot — PAPER MODE ONLY");
 console.log(`Starting paper cash: $${state.cashUsd.toFixed(4)}`);
+console.log("Social discovery: RSS feeds active; X API " + (config.xApiEnabled ? "enabled with daily post cap " + config.xMaxPostsPerDay : "disabled (ready to activate)"));
 
 async function cycle() {
   const today = new Date().toISOString().slice(0, 10);
   if (state.day !== today) {
     state.day = today;
     state.dayStartEquityUsd = state.cashUsd + state.positions.reduce((s, p) => s + p.quantity * p.lastPrice, 0);
+  }
+
+  if (!state.lastSocialScanAt || Date.now() - state.lastSocialScanAt >= config.socialScanIntervalMs) {
+    try {
+      const social = await discoverSocialLeads(config, state);
+      socialMints = social.mints;
+      state.lastSocialScanAt = Date.now();
+      console.log(`SOCIAL DISCOVERY: ${social.leads.length} new leads, ${social.mints.length} Solana addresses, ${social.xPostsRead} X posts fetched`);
+      for (const lead of social.leads.slice(0, 10)) {
+        console.log("SOCIAL LEAD", lead.source, lead.title, lead.url || "");
+        if (lead.addresses.length) console.log("SOCIAL TOKEN ADDRESSES", lead.addresses.join(", "));
+      }
+    } catch (error) {
+      console.warn("Social discovery failed:", error.message);
+    }
   }
 
   for (const address of config.watchWallets) {
@@ -28,7 +46,7 @@ async function cycle() {
     }
   }
 
-  const candidates = await scanCandidates(config, state);
+  const candidates = await scanCandidates(config, state, socialMints);
   for (const candidate of candidates) {
     if (!candidate.assessment.approved) {
       console.log("BLOCKED", candidate.mint, candidate.assessment.reasons.join("; "));
