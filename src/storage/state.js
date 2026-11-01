@@ -4,7 +4,7 @@ export async function loadState(path,startingCash){
   const state=JSON.parse(await readFile(path,"utf8"));
   state.positions??=[];state.trades??=[];state.seenMints??=[];
   state.initialBalanceUsd??=startingCash;state.day??=new Date().toISOString().slice(0,10);
-  state.dayStartEquityUsd??=state.cashUsd??startingCash;
+  state.dayStartEquityUsd??=state.cashUsd??startingCash;state.dayTradeStartIndex??=state.trades.length;
   return state;
  }catch(error){if(error.code!=="ENOENT")throw error;return{cashUsd:startingCash,initialBalanceUsd:startingCash,positions:[],trades:[],day:new Date().toISOString().slice(0,10),dayStartEquityUsd:startingCash,seenMints:[]};}
 }
