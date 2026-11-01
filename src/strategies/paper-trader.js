@@ -40,5 +40,5 @@ export function updatePaperPositions(state,config,now=new Date()) {
 }
 export function getAccountSummary(state) {
   const openValueUsd=state.positions.reduce((s,p)=>s+p.quantity*p.lastPrice,0),equityUsd=state.cashUsd+openValueUsd,realizedPnlUsd=state.trades.reduce((s,t)=>s+t.pnlUsd,0),unrealizedPnlUsd=state.positions.reduce((s,p)=>s+p.quantity*p.lastPrice-p.investedUsd,0),baseline=Number(state.initialBalanceUsd??state.startingBalanceUsd??20),dayStart=Number(state.dayStartEquityUsd??baseline);
-  return{cashUsd:state.cashUsd,openValueUsd,equityUsd,realizedPnlUsd,unrealizedPnlUsd,openPositions:state.positions.length,totalReturnPct:baseline>0?(equityUsd-baseline)/baseline*100:0,dailyDrawdownPct:dayStart>0?Math.max(0,(dayStart-equityUsd)/dayStart)*100:0};
+  const eligiblePaperProfitUsd=Math.max(0,Math.min(realizedPnlUsd,equityUsd-baseline));\n  return{cashUsd:state.cashUsd,openValueUsd,equityUsd,realizedPnlUsd,unrealizedPnlUsd,eligiblePaperProfitUsd,openPositions:state.positions.length,totalReturnPct:baseline>0?(equityUsd-baseline)/baseline*100:0,dailyDrawdownPct:dayStart>0?Math.max(0,(dayStart-equityUsd)/dayStart)*100:0};
 }
