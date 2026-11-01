@@ -1,7 +1,7 @@
 import { fileURLToPath } from "node:url";
 import { config } from "./config.js";
 import { scanCandidates } from "./strategies/scanner.js";
-import { markToMarket, openPaperPosition, updatePaperPositions } from "./strategies/paper-trader.js";
+import { markToMarket, openPaperPosition, updatePaperPositions, getAccountSummary } from "./strategies/paper-trader.js";
 import { getRecentWalletActivity } from "./strategies/wallet-monitor.js";
 import { loadState, saveState } from "./storage/state.js";
 
@@ -50,11 +50,27 @@ async function cycle() {
       console.warn("Price refresh failed:", position.mint, error.message);
     }
   }
-  const equity = markToMarket(state, prices, config);
+  markToMarket(state, prices);
   const closed = updatePaperPositions(state, config);
-  for (const trade of closed) console.log("PAPER SELL", trade.mint, trade.reason, "P/L:", trade.pnlUsd.toFixed(4));
+  for (const trade of closed) {
+    console.log(
+      "PAPER SELL", trade.mint, trade.reason,
+      `P/L: ${trade.pnlUsd.toFixed(4)} (${trade.pnlPct.toFixed(2)}%)`,
+      `entry fill ${trade.entryFillPrice.toFixed(8)}`,
+      `trigger ${trade.triggerPrice.toFixed(8)}`,
+      `exit fill ${trade.exitFillPrice.toFixed(8)}`,
+      `exit fee ${trade.exitFeeUsd.toFixed(4)}`,
+      `exit slippage ${trade.exitSlippageUsd.toFixed(4)}`
+    );
+  }
   await saveState(STATE_PATH, state);
-  console.log(`Cash $${state.cashUsd.toFixed(4)} | Equity $${equity.toFixed(4)} | Open positions ${state.positions.length}`);
+  const summary = getAccountSummary(state);
+  console.log(
+    `Cash ${summary.cashUsd.toFixed(4)} | Equity ${summary.equityUsd.toFixed(4)} | ` +
+    `Realized P/L ${summary.realizedPnlUsd.toFixed(4)} | ` +
+    `Unrealized P/L ${summary.unrealizedPnlUsd.toFixed(4)} | ` +
+    `Open positions ${summary.openPositions}`
+  );
 }
 
 while (true) {
