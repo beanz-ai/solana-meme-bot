@@ -1,4 +1,5 @@
 import {getPositionSize} from "../risk/risk-manager.js";
+
 export function markToMarket(state,prices) {
   for (const p of state.positions) {
     const price=Number(prices[p.mint]);
@@ -17,25 +18,53 @@ export function openPaperPosition(state,{mint,price,config,now=new Date()}) {
   const spend=sizing.sizeUsd,entryFeeUsd=spend*config.estimatedDexFeeBps/10000,entryFillPrice=price*(1+config.estimatedSlippageBps/10000),quantity=(spend-entryFeeUsd)/entryFillPrice;
   if(!(quantity>0)||spend>state.cashUsd)return{opened:false,reason:"Invalid simulated fill"};
   state.cashUsd-=spend;
-  state.positions.push({mint,referenceEntryPrice:price,entryFillPrice,lastPrice:price,highestPrice:price,quantity,investedUsd:spend,entryFeeUsd,openedAt:now.toISOString(),lastPriceAt:now.toISOString(),stalePriceCycles:0});
+  state.positions.push({mint,referenceEntryPrice:price,entryFillPrice,lastPrice:price,highestPrice:price,quantity,investedUsd:spend,entryFeeUsd,openedAt:now.toISOString(),lastPriceAt:now.toISOString(),stalePriceCycles:0,stage1Taken:false});
   return{opened:true,quantity,spendUsd:spend};
 }
+function simulateExit(state,p,quantity,reason,config,now,partial) {
+  const fraction=quantity/p.quantity,allocatedInvestment=p.investedUsd*fraction,allocatedEntryFee=p.entryFeeUsd*fraction;
+  const exitFillPrice=p.lastPrice*(1-config.estimatedSlippageBps/10000),grossProceedsUsd=quantity*exitFillPrice,exitFeeUsd=grossProceedsUsd*config.estimatedDexFeeBps/10000,proceedsUsd=Math.max(0,grossProceedsUsd-exitFeeUsd),exitSlippageUsd=quantity*(p.lastPrice-exitFillPrice);
+  state.cashUsd+=proceedsUsd;
+  const pnlUsd=proceedsUsd-allocatedInvestment,trade={mint:p.mint,referenceEntryPrice:p.referenceEntryPrice,entryFillPrice:p.entryFillPrice,triggerPrice:p.lastPrice,highestPrice:p.highestPrice,exitFillPrice,quantity,investedUsd:allocatedInvestment,entryFeeUsd:allocatedEntryFee,exitFeeUsd,exitSlippageUsd,grossProceedsUsd,proceedsUsd,pnlUsd,pnlPct:allocatedInvestment>0?pnlUsd/allocatedInvestment*100:0,reason,partial,closedAt:now.toISOString()};
+  state.trades.push(trade);
+  p.quantity-=quantity;p.investedUsd-=allocatedInvestment;p.entryFeeUsd-=allocatedEntryFee;
+  if(pnlUsd<0)state.lastLossAt=now.getTime();
+  return trade;
+}
 export function updatePaperPositions(state,config,now=new Date()) {
-  const closed=[];
-  state.positions=state.positions.filter(p=>{
-    if((p.stalePriceCycles??0)>0)return true;
+  const closed=[],remaining=[];
+  for(const p of state.positions){
+    if((p.stalePriceCycles??0)>0){remaining.push(p);continue;}
     const change=(p.lastPrice-p.entryFillPrice)/p.entryFillPrice,peakChange=((p.highestPrice??p.lastPrice)-p.entryFillPrice)/p.entryFillPrice;
     let reason=null;
     if(change<=-config.stopLossPct)reason="stop-loss";
     else if(peakChange>=(config.breakEvenActivationPct??0.10)&&change<=0.01)reason="break-even-trailing-stop";
-    else if(peakChange>=(config.trailingActivationPct??0.15)&&p.lastPrice<=(p.highestPrice??p.lastPrice)*(1-(config.trailingStopPct??0.08)))reason="trailing-stop";
-    else if(change>=config.takeProfitPct)reason="take-profit";
-    if(!reason)return true;
-    const exitFillPrice=p.lastPrice*(1-config.estimatedSlippageBps/10000),grossProceedsUsd=p.quantity*exitFillPrice,exitFeeUsd=grossProceedsUsd*config.estimatedDexFeeBps/10000,proceedsUsd=Math.max(0,grossProceedsUsd-exitFeeUsd),exitSlippageUsd=p.quantity*(p.lastPrice-exitFillPrice);
-    state.cashUsd+=proceedsUsd;
-    const pnlUsd=proceedsUsd-p.investedUsd,trade={mint:p.mint,referenceEntryPrice:p.referenceEntryPrice,entryFillPrice:p.entryFillPrice,triggerPrice:p.lastPrice,highestPrice:p.highestPrice,exitFillPrice,quantity:p.quantity,investedUsd:p.investedUsd,entryFeeUsd:p.entryFeeUsd,exitFeeUsd,exitSlippageUsd,grossProceedsUsd,proceedsUsd,pnlUsd,pnlPct:p.investedUsd>0?pnlUsd/p.investedUsd*100:0,reason,closedAt:now.toISOString()};
-    state.trades.push(trade);if(pnlUsd<0)state.lastLossAt=now.getTime();closed.push(trade);return false;
-  });
+    if(reason){closed.push(simulateExit(state,p,p.quantity,reason,config,now,false));continue;}
+
+    // Older configurations retain their original single take-profit behavior.
+    if(!Number.isFinite(config.takeProfitStage1Pct)){
+      if(change>=config.takeProfitPct)closed.push(simulateExit(state,p,p.quantity,"take-profit",config,now,false));
+      else remaining.push(p);
+      continue;
+    }
+
+    if(!p.stage1Taken&&change>=config.takeProfitStage1Pct){
+      const sellFraction=Math.min(1,Math.max(0.01,config.takeProfitStage1SellPct??0.5));
+      const partial=simulateExit(state,p,p.quantity*sellFraction,"take-profit-stage-1",config,now,true);
+      p.stage1Taken=true;closed.push(partial);
+    }
+    if(p.quantity>0&&change>=config.takeProfitStage2Pct){
+      closed.push(simulateExit(state,p,p.quantity,"take-profit-stage-2",config,now,false));
+      continue;
+    }
+    const trailingActive=p.stage1Taken&&peakChange>=config.takeProfitTrailingActivationPct;
+    if(p.quantity>0&&trailingActive&&p.lastPrice<=(p.highestPrice??p.lastPrice)*(1-config.takeProfitTrailingStopPct)){
+      closed.push(simulateExit(state,p,p.quantity,"take-profit-trailing-stop",config,now,false));
+      continue;
+    }
+    if(p.quantity>0)remaining.push(p);
+  }
+  state.positions=remaining;
   return closed;
 }
 export function getAccountSummary(state) {
