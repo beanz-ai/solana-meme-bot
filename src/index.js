@@ -55,6 +55,8 @@ async function cycle(){
  } else if(!dayLocked&&!stalePosition&&state.positions.length>0) console.log("ENTRY PAUSED — one paper position is already open");
  await saveState(STATE_PATH,state);
  const s=getAccountSummary(state);
- console.log(`Cash $${s.cashUsd.toFixed(4)} | Equity $${s.equityUsd.toFixed(4)} | Realized $${s.realizedPnlUsd.toFixed(4)} | Unrealized $${s.unrealizedPnlUsd.toFixed(4)} | Return ${s.totalReturnPct.toFixed(2)}% | Daily drawdown ${s.dailyDrawdownPct.toFixed(2)}% | Open ${s.openPositions}`);
+ console.log(`Cash ${s.cashUsd.toFixed(4)} | Equity ${s.equityUsd.toFixed(4)} | Realized ${s.realizedPnlUsd.toFixed(4)} | Unrealized ${s.unrealizedPnlUsd.toFixed(4)} | Return ${s.totalReturnPct.toFixed(2)}% | Daily drawdown ${s.dailyDrawdownPct.toFixed(2)}% | Open ${s.openPositions}`);
+ const marriageJmd=config.usdToJmdRate>0?s.eligiblePaperProfitUsd*config.usdToJmdRate:null;
+ console.log(marriageJmd===null?"MARRIAGE FUND: set USD_TO_JMD_RATE in .env to calculate paper progress":`MARRIAGE FUND PAPER PROGRESS: J${marriageJmd.toFixed(0)} / J${config.marriageTargetJmd.toLocaleString("en-US")} (simulated only; not withdrawable)`);
 }
 while(true){try{await cycle();}catch(error){console.error("Cycle failed:",error.message);}await sleep(config.scanIntervalMs);}
