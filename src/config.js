@@ -2,7 +2,7 @@ const num=(key,fallback)=>{const value=Number(process.env[key]??fallback);if(!Nu
 export const config=Object.freeze({
  mode:process.env.MODE??"paper",startBalanceUsd:num("START_BALANCE_USD",20),
  riskPerTradePct:Math.min(0.15,Math.max(0.001,num("RISK_PER_TRADE_PCT",0.15))),
- maxOpenPositions:Math.max(1,Math.floor(num("MAX_OPEN_POSITIONS",1))),
+ maxOpenPositions:Math.min(1,Math.max(1,Math.floor(num("MAX_OPEN_POSITIONS",1)))),
  stopLossPct:Math.min(0.15,Math.max(0.01,num("STOP_LOSS_PCT",0.15))),takeProfitPct:num("TAKE_PROFIT_PCT",0.20),
  takeProfitStage1Pct:Math.max(0.01,num("TAKE_PROFIT_STAGE1_PCT",0.50)),takeProfitStage1SellPct:Math.min(1,Math.max(0.01,num("TAKE_PROFIT_STAGE1_SELL_PCT",0.50))),
  takeProfitStage2Pct:Math.max(0.02,num("TAKE_PROFIT_STAGE2_PCT",2.00)),takeProfitTrailingActivationPct:Math.max(1.5,num("TAKE_PROFIT_TRAILING_ACTIVATION_PCT",1.50)),takeProfitTrailingStopPct:Math.min(0.10,Math.max(0.01,num("TAKE_PROFIT_TRAILING_STOP_PCT",0.10))),
