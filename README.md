@@ -19,8 +19,11 @@ A paper-trading-first Solana token discovery and monitoring prototype.
 - Social posts can surface Solana mint addresses; those addresses are independently checked through DexScreener and RugCheck.
 - Pair data retrieval and liquidity/volume/activity filters.
 - RugCheck report retrieval with fail-closed checks for risk score, reported locked liquidity, holder concentration, mint authority and freeze authority.
-- Simulated entries, price marks, stop-loss and take-profit exits.
-- Position sizing, one-position limit, daily drawdown guard and estimated cost ceiling.
+- Separate token-security screening and trade-timing score based on 5m/15m/1h momentum, recent volume, buy/sell pressure and liquidity.
+- Paper entries only when required short-term evidence exists and the momentum score reaches the configured threshold.
+- Simulated stop-loss, take-profit, break-even and trailing-stop exits; stop triggers are not guaranteed fills.
+- Conservative risk ceilings: at most 10% of available paper cash per position, one open position, 5% daily drawdown lockout, two consecutive daily losses lockout and a 30-minute post-loss cooldown.
+- Trade journal with realized/unrealized P/L, total return and daily drawdown.
 - Read-only public wallet signature monitoring.
 - Local state persistence and automated unit tests.
 
@@ -52,9 +55,9 @@ Social posts without a Solana mint address are logged as leads only; the bot doe
 
 ## Configuration
 
-The default paper account starts at US$2, risks at most 20% of available paper cash per position and allows one open position. Default filters require US$10,000 liquidity, US$1,000 hourly volume, 15 hourly transactions, RugCheck score no higher than 25, and reported LP lock of at least 80%. The estimated round-trip fee/slippage ceiling is 5%.
+The default paper account starts at US$2, risks at most 10% of available paper cash per position and allows one open position. Default filters require US$10,000 liquidity, US$1,000 hourly volume, 15 hourly transactions, RugCheck score no higher than 25, and reported LP lock of at least 80%. The estimated round-trip fee/slippage ceiling is 5%.
 
-A US$2 live account is not recommended: network fees, priority fees, pool fees and slippage can consume a large fraction of such a small trade. This repository deliberately contains no live execution path.
+Trading Intelligence 2.0 requires short-term DexScreener fields; if those fields are missing, the bot skips the trade rather than guessing. These thresholds are experimental filters, not evidence of a profitable edge. Paper tests and out-of-sample evaluation are required.\n\nA US$2 live account is not recommended: network fees, priority fees, pool fees and slippage can consume a large fraction of such a small trade. This repository deliberately contains no live execution path.
 
 ## Important limitations
 
