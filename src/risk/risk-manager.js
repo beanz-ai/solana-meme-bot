@@ -17,7 +17,10 @@ export function getPositionSize({cashUsd,config,openPositions,equityUsd,dayStart
   }
   const costPct=estimateRoundTripCostPct(config);
   if (costPct>config.maxRoundtripCostPct) return {allowed:false,reason:"Estimated round-trip costs exceed limit"};
-  const sizeUsd=Math.min(cashUsd*config.maxPositionPct,cashUsd*0.05);
+  const riskPerDollar=config.stopLossPct+costPct;
+  if (!(riskPerDollar>0)||!(equityUsd>0)) return {allowed:false,reason:"Invalid risk or equity calculation"};
+  const riskBudgetUsd=equityUsd*config.riskPerTradePct;
+  const sizeUsd=Math.min(cashUsd,riskBudgetUsd/riskPerDollar);
   if (!(sizeUsd>0)) return {allowed:false,reason:"Insufficient paper cash"};
-  return {allowed:true,sizeUsd,estimatedRoundTripCostPct:costPct};
+  return {allowed:true,sizeUsd,riskBudgetUsd,estimatedAccountRiskPct:(sizeUsd*riskPerDollar/equityUsd)*100,estimatedRoundTripCostPct:costPct};
 }
