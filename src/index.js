@@ -10,10 +10,9 @@ const STATE_PATH=fileURLToPath(new URL("../data/state.json",import.meta.url));
 const state=await loadState(STATE_PATH,config.startBalanceUsd);
 const sleep=ms=>new Promise(resolve=>setTimeout(resolve,ms));
 let socialMints=[];
-console.log("Solana Meme Bot — TRADING INTELLIGENCE 2.1 — PAPER MODE ONLY");
+console.log("Solana Meme Bot — TRADING INTELLIGENCE 2.3 — PAPER MODE ONLY");
 console.log(`Paper cash: $${state.cashUsd.toFixed(4)} | Baseline: $${Number(state.initialBalanceUsd).toFixed(4)}`);
-console.log(`Marriage target: J${config.marriageTargetJmd.toLocaleString("en-US")} | USD/JMD rate: ${config.usdToJmdRate>0?config.usdToJmdRate:"not set"} | paper-only tracking`);
-console.log(`Risk: max ${(config.maxPositionPct*100).toFixed(1)}% per position, ${(config.dailyDrawdownLimitPct*100).toFixed(1)}% daily lockout, ${config.maxConsecutiveLosses} consecutive losses, ${Math.round(config.lossCooldownMs/60000)} min cooldown`);
+console.log(`Risk budget: ${(config.riskPerTradePct*100).toFixed(1)}% equity per trade | Stop: ${(config.stopLossPct*100).toFixed(1)}% | Daily lockout: ${(config.dailyDrawdownLimitPct*100).toFixed(1)}% | ${config.maxConsecutiveLosses} consecutive losses | ${Math.round(config.lossCooldownMs/60000)} min cooldown`);
 async function cycle(){
  const today=new Date().toISOString().slice(0,10);
  if(state.day!==today){state.day=today;state.dayStartEquityUsd=state.cashUsd+state.positions.reduce((s,p)=>s+p.quantity*p.lastPrice,0);state.dayTradeStartIndex=state.trades.length;}
@@ -56,7 +55,5 @@ async function cycle(){
  await saveState(STATE_PATH,state);
  const s=getAccountSummary(state);
  console.log(`Cash ${s.cashUsd.toFixed(4)} | Equity ${s.equityUsd.toFixed(4)} | Realized ${s.realizedPnlUsd.toFixed(4)} | Unrealized ${s.unrealizedPnlUsd.toFixed(4)} | Return ${s.totalReturnPct.toFixed(2)}% | Daily drawdown ${s.dailyDrawdownPct.toFixed(2)}% | Open ${s.openPositions}`);
- const marriageJmd=config.usdToJmdRate>0?s.eligiblePaperProfitUsd*config.usdToJmdRate:null;
- console.log(marriageJmd===null?"MARRIAGE FUND: set USD_TO_JMD_RATE in .env to calculate paper progress":`MARRIAGE FUND PAPER PROGRESS: J${marriageJmd.toFixed(0)} / J${config.marriageTargetJmd.toLocaleString("en-US")} (simulated only; not withdrawable)`);
 }
 while(true){try{await cycle();}catch(error){console.error("Cycle failed:",error.message);}await sleep(config.scanIntervalMs);}
