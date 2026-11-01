@@ -3,6 +3,8 @@ export const config=Object.freeze({
  mode:process.env.MODE??"paper",startBalanceUsd:num("START_BALANCE_USD",20),marriageTargetJmd:num("MARRIAGE_TARGET_JMD",400000),usdToJmdRate:num("USD_TO_JMD_RATE",0),
  maxPositionPct:Math.min(num("MAX_POSITION_PCT",0.05),0.05),maxOpenPositions:Math.min(1,Math.floor(num("MAX_OPEN_POSITIONS",1))),
  stopLossPct:Math.min(num("STOP_LOSS_PCT",0.08),0.08),takeProfitPct:num("TAKE_PROFIT_PCT",0.20),
+ takeProfitStage1Pct:Math.max(0.01,num("TAKE_PROFIT_STAGE1_PCT",0.50)),takeProfitStage1SellPct:Math.min(1,Math.max(0.01,num("TAKE_PROFIT_STAGE1_SELL_PCT",0.50))),
+ takeProfitStage2Pct:Math.max(0.02,num("TAKE_PROFIT_STAGE2_PCT",2.00)),takeProfitTrailingActivationPct:Math.max(1.5,num("TAKE_PROFIT_TRAILING_ACTIVATION_PCT",1.50)),takeProfitTrailingStopPct:Math.min(0.10,Math.max(0.01,num("TAKE_PROFIT_TRAILING_STOP_PCT",0.10))),
  dailyDrawdownLimitPct:Math.min(num("DAILY_DRAWDOWN_LIMIT_PCT",0.03),0.03),maxConsecutiveLosses:Math.min(2,Math.floor(num("MAX_CONSECUTIVE_LOSSES",2))),
  lossCooldownMs:Math.max(num("LOSS_COOLDOWN_MS",3600000),3600000),breakEvenActivationPct:num("BREAK_EVEN_ACTIVATION_PCT",0.10),
  trailingActivationPct:num("TRAILING_ACTIVATION_PCT",0.15),trailingStopPct:num("TRAILING_STOP_PCT",0.08),
