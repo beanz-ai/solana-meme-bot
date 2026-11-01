@@ -1,6 +1,6 @@
 const num=(key,fallback)=>{const value=Number(process.env[key]??fallback);if(!Number.isFinite(value))throw new Error(`Invalid numeric setting: ${key}`);return value;};
 export const config=Object.freeze({
- mode:process.env.MODE??"paper",startBalanceUsd:num("START_BALANCE_USD",20),
+ mode:process.env.MODE??"paper",startBalanceUsd:num("START_BALANCE_USD",20),marriageTargetJmd:num("MARRIAGE_TARGET_JMD",400000),usdToJmdRate:num("USD_TO_JMD_RATE",0),
  maxPositionPct:Math.min(num("MAX_POSITION_PCT",0.05),0.05),maxOpenPositions:Math.min(1,Math.floor(num("MAX_OPEN_POSITIONS",1))),
  stopLossPct:Math.min(num("STOP_LOSS_PCT",0.08),0.08),takeProfitPct:num("TAKE_PROFIT_PCT",0.20),
  dailyDrawdownLimitPct:Math.min(num("DAILY_DRAWDOWN_LIMIT_PCT",0.03),0.03),maxConsecutiveLosses:Math.min(2,Math.floor(num("MAX_CONSECUTIVE_LOSSES",2))),
