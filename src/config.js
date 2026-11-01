@@ -23,6 +23,11 @@ export const config = Object.freeze({
   estimatedSlippageBps: num("ESTIMATED_SLIPPAGE_BPS", 100),
   estimatedDexFeeBps: num("ESTIMATED_DEX_FEE_BPS", 30),
   scanIntervalMs: num("SCAN_INTERVAL_MS", 60000),
+  socialScanIntervalMs: num("SOCIAL_SCAN_INTERVAL_MS", 900000),
+  socialRssFeeds: (process.env.SOCIAL_RSS_FEEDS ?? "").split(",").map(x => x.trim()).filter(Boolean),
+  xApiEnabled: (process.env.X_API_ENABLED ?? "false").toLowerCase() === "true",
+  xBearerToken: process.env.X_BEARER_TOKEN ?? "",
+  xMaxPostsPerDay: Math.max(0, Math.floor(num("X_MAX_POSTS_PER_DAY", 20))),
   rpcUrl: process.env.SOLANA_RPC_URL ?? "https://api.mainnet-beta.solana.com",
   watchWallets: (process.env.WATCH_WALLETS ?? "").split(",").map(x => x.trim()).filter(Boolean)
 });
@@ -30,4 +35,7 @@ export const config = Object.freeze({
 if (config.mode !== "paper") throw new Error("Only MODE=paper is supported. Live trading is disabled.");
 if (config.startBalanceUsd <= 0 || config.maxPositionPct <= 0 || config.maxPositionPct > 1) {
   throw new Error("Balance and position sizing settings are outside safe bounds.");
+}
+if (config.xApiEnabled && !config.xBearerToken) {
+  throw new Error("X_API_ENABLED=true requires X_BEARER_TOKEN.");
 }
