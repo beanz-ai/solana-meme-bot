@@ -24,8 +24,12 @@ export function assessToken({ pair, rug, config }) {
     else if (rug.topHolderPct > config.maxTopHolderPct) reasons.push("Top-holder concentration too high");
     if (rug.mintAuthority !== null && rug.mintAuthority !== false && rug.mintAuthority !== "") reasons.push("Mint authority may remain enabled");
     if (rug.freezeAuthority !== null && rug.freezeAuthority !== false && rug.freezeAuthority !== "") reasons.push("Freeze authority may remain enabled");
-    if (rug.risks.some(r => /honeypot|freeze|mint authority|mutable|withdraw|rug|blacklist/i.test(String(r.name ?? r.description ?? r)))))
-      reasons.push("Provider reports a potentially dangerous token risk");
+
+    const hasDangerousRisk = rug.risks.some((risk) => {
+      const description = String(risk.name ?? risk.description ?? "");
+      return /honeypot|freeze|mint authority|mutable|withdraw|rug|blacklist/i.test(description);
+    });
+    if (hasDangerousRisk) reasons.push("Provider reports a potentially dangerous token risk");
   }
 
   const score = reasons.length === 0 ? 80 : Math.max(0, 80 - reasons.length * 15);
