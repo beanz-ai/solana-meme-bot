@@ -11,7 +11,7 @@ A paper-trading-first Solana token discovery and monitoring prototype.
 - Prices, liquidity and simulated fills are estimates, not executable quotes.
 - Social popularity is discovery evidence only and never overrides token safety checks.
 
-## Trading Intelligence 2.1
+## Trading Intelligence 2.2
 
 - Recent Solana token-profile discovery through DexScreener.
 - RSS/Atom news and announcement feed monitoring; optional official X recent-post search is disabled by default.
@@ -19,10 +19,12 @@ A paper-trading-first Solana token discovery and monitoring prototype.
 - Bounded token scanning and cached RugCheck reports; HTTP 429 triggers a cooldown and fails closed.
 - One open position maximum; position size is capped at 5% of available paper cash.
 - Daily drawdown lockout at 3%, two consecutive losses lockout, and at least a 60-minute post-loss cooldown.
-- Stop, take-profit, break-even and trailing exit simulations. Stop triggers are not guaranteed fills.
-- Stale price data pauses new entries and does not invent a simulated exit price.
+- Initial stop-loss trigger capped at 8%; simulated stop triggers are not guaranteed fills.
+- **Two-stage take-profit:** sell 50% at +50% net price movement from entry fill; manage the remaining 50% toward +200%.
+- The remaining position activates a 10% peak-to-current trailing exit after the trade has reached +150% from entry. The +200% target closes the remainder if reached first.
+- Break-even protection remains active. Stale price data pauses new entries and does not invent a simulated exit price.
 - Existing positions are refreshed and managed before the bot scans for new entries.
-- Trade journal reports realized/unrealized P/L and drawdown.
+- Trade journal reports partial exits, realized/unrealized P/L and drawdown.
 
 ## Marriage fund objective
 
